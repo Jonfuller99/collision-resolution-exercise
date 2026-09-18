@@ -81,21 +81,44 @@ public class CollisionResolutionExampleGame : Game
                     balls[i].Colliding = true;
                     balls[j].Colliding = true;
 
+                    
+
                     // TODO: Handle collisions
+                    balls[i].Center -= balls[i].Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    balls[j].Center -= balls[j].Velocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+
                     Vector2 collisionAxis = balls[i].Center - balls[j].Center;
                     collisionAxis.Normalize();
+
+                    // From claude.ai to avoid the balls getting locked together sometimes. Simply checks if the balls are already moving apart, and if they are it skips.
+                    if (Vector2.Dot(balls[i].Velocity - balls[j].Velocity, collisionAxis) >= 0) continue;
 
                     float angle = (float)System.Math.Acos(Vector2.Dot(collisionAxis, Vector2.UnitX));
                     
                     float m0 = balls[i].Mass;
                     float m1 = balls[j].Mass;
-                    Vector2 u0 = Vector2.Transform(balls[i].Velocity, Matrix.CreateRotationZ(angle));
-                    Vector2 u1 = Vector2.Transform(balls[j].Velocity, Matrix.CreateRotationZ(angle));
+
+                    Vector2 u0 = Vector2.Transform(balls[i].Velocity, Matrix.CreateRotationZ(-angle));
+                    Vector2 u1 = Vector2.Transform(balls[j].Velocity, Matrix.CreateRotationZ(-angle));
 
                     Vector2 v0;
                     Vector2 v1;
 
-                    v0.X = ((m0 - m1) / (m0 + m1))* u0.X + ((2*m1) / m0+m1) *u1.X;                    
+                    v0.X = ((m0 - m1) / (m0 + m1)) * u0.X + ((2 * m1) / (m0 + m1)) * u1.X;                    
+                    v1.X = ((2 * m0) / (m0 + m1)) * u0.X + ((m1 - m0) / (m0 + m1)) * u1.X;   
+
+                    v0.Y = u0.Y;                
+                    v1.Y = u1.Y;     
+
+
+
+                    balls[i].Velocity = Vector2.Transform(v0, Matrix.CreateRotationZ(angle));       
+                    balls[j].Velocity = Vector2.Transform(v1, Matrix.CreateRotationZ(angle));    
+
+
+
+
                 }
             }
         } 
